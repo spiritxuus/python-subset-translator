@@ -126,13 +126,20 @@ public class DescendingParser {
     }
 
     //<if> ::== if <part> <список_elif> (if)
-    private void ifStatement() {
-
+    private void ifStatement() throws ParseException {
+        expect(TokenType.IF);
+        part();
+        elseIfList();
     }
 
     //<part> ::== <лог_выр> : P <спис_опер> (id lit ( not)
-    private void part() {
-
+    private void part() throws ParseException {
+        logicalExpression();
+        expect(TokenType.COLON);
+        expect(TokenType.NEWLINE);
+        expect(TokenType.INDENT);
+        operatorList();
+        expect(TokenType.DEDENT);
     }
 
     /*
@@ -140,8 +147,34 @@ public class DescendingParser {
         <список_elif> ::== else : P <спис_опер>         (else)
         <список_elif> ::== ε                            #
      */
-    private void elseIfList() {
+    private void elseIfList() throws ParseException {
+        Token token = current();
 
+        if (token != null && token.getType() == TokenType.ELIF){
+            expect(TokenType.ELIF);
+            part();
+            elseIfList();
+            return;
+        }
+
+        if (token != null && token.getType() == TokenType.ELSE){
+            expect(TokenType.ELSE);
+            expect(TokenType.COLON);
+            expect(TokenType.NEWLINE);
+            expect(TokenType.INDENT);
+            operatorList();
+            expect(TokenType.DEDENT);
+            return;
+        }
+
+        if (token == null ||
+                token.getType() == TokenType.IDENTIFIER ||
+                token.getType() == TokenType.IF ||
+                token.getType() == TokenType.DEDENT) {
+
+            return;
+        }
+        throw error("ELIF, ELSE или конец условной конструкции");
     }
 
     //<множ> ::== id = <Y> (id)
@@ -181,8 +214,9 @@ public class DescendingParser {
     }
 
     //<арифм_выр> ::== <elem> <Z> (id lit)
-    private void arithmeticExpression() {
-
+    private void arithmeticExpression() throws ParseException {
+        element();
+        arithmeticExpressionTail();
     }
 
     /*
@@ -192,8 +226,60 @@ public class DescendingParser {
 
         <Z> - ArithmeticExpressionTail
      */
-    private void arithmeticExpressionTail() {
+    private void arithmeticExpressionTail() throws ParseException {
+        Token token = current();
 
+        if (isArithmeticOperator(token)) {
+            arithmeticOperator();
+            element();
+            return;
+        }
+
+        if (isArithmeticExpressionFollow(token)) {
+            return;
+        }
+
+        throw error("арифметический оператор или конец выражения");
+    }
+
+    private boolean isArithmeticOperator(Token token) {
+        if (token == null) {
+            return false;
+        }
+
+        switch (token.getType()) {
+            case PLUS:
+            case MINUS:
+            case DIVISION:
+            case MULTIPLICATION:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    private boolean isArithmeticExpressionFollow(Token token) {
+        if (token == null) {
+            return true;
+        }
+
+        switch (token.getType()) {
+            case NEWLINE:
+            case COMMA:
+            case LESS:
+            case GREATER:
+            case LESSOREQUAL:
+            case GREATEROREQUAL:
+            case EQUAL:
+            case NOTEQUAL:
+            case AND:
+            case OR:
+            case RPAR:
+            case COLON:
+                return true;
+            default:
+                return false;
+        }
     }
 
     /*
@@ -202,50 +288,120 @@ public class DescendingParser {
         <арифм_опер> ::== / (/)
         <арифм_опер> ::== * (*)
      */
-    private void arithmeticOperator() {
+    private void arithmeticOperator() throws ParseException {
+        Token token = current();
 
+        if (token == null) {
+            throw error("PLUS, MINUS, DIVISION или MULTIPLICATION");
+        }
+
+        switch(token.getType()){
+            case PLUS:
+                expect(TokenType.PLUS);
+                break;
+            case MINUS:
+                expect(TokenType.MINUS);
+                break;
+            case DIVISION:
+                expect(TokenType.DIVISION);
+                break;
+            case MULTIPLICATION:
+                expect(TokenType.MULTIPLICATION);
+                break;
+            default:
+                throw error("PLUS, MINUS, DIVISION или MULTIPLICATION");
+        }
     }
 
     /*
         <elem> ::== id  (lit)
         <elem> ::== lit (id)
      */
-    private void element() {
+    private void element() throws ParseException {
+        Token token = current();
 
+        if (token == null){
+            throw error("IDENTIFIER или LITERAL");
+        }
+
+        switch(token.getType()){
+            case IDENTIFIER:
+                expect(TokenType.IDENTIFIER);
+                break;
+            case LITERAL:
+                expect(TokenType.LITERAL);
+                break;
+            default:
+                throw error("IDENTIFIER или LITERAL");
+        }
     }
 
     //<лог_выр> ::== <лог_и> <C> (id lit ( not)
-    private void logicalExpression() {
-
+    private void logicalExpression() throws ParseException {
+        logicalAnd();
+        logicalExpressionTail();
     }
 
     /*
        <лог_выр> ::== <лог_и> <C>  (id lit ( not)
        <C> ::== ε                  #
-       <C> ::== || <лог_выр>`      (id lit ( not)
+       <C> ::== or <лог_выр>`      (or)
        <лог_выр>` ::== <лог_и> <C> (id lit ( not)
 
        <C> - LogicalExpressionTail
     */
-    private void logicalExpressionTail() {
+    private void logicalExpressionTail() throws ParseException {
+        Token token = current();
 
+        if (token != null && token.getType() == TokenType.OR) {
+            expect(TokenType.OR);
+            logicalAnd();
+            logicalExpressionTail();
+            return;
+        }
+
+        if (token != null &&
+                (token.getType() == TokenType.COLON ||
+                        token.getType() == TokenType.RPAR)) {
+            return;
+        }
+
+        throw error("OR, COLON или RPAR");
     }
 
     //<лог_и> ::== <лог_опер> <V> (id lit ( not)
-    private void logicalAnd() {
-
+    private void logicalAnd() throws ParseException {
+        logicalOperator();
+        logicalAndTail();
     }
 
     /*
         <лог_и> ::== <лог_опер> <V>  (id lit ( not)
         <V> ::== ε                   #
-        <V> ::== and <лог_и>`         (id lit ( not)
+        <V> ::== and <лог_и>`         (and)
         <лог_и>` ::== <лог_опер> <V> (id lit ( not)
 
         <V> - LogicalAndTail
      */
-    private void logicalAndTail() {
+    private void logicalAndTail() throws ParseException {
+        Token token = current();
 
+        if (token != null && token.getType() == TokenType.AND) {
+            expect(TokenType.AND);
+            logicalOperator();
+            logicalAndTail();
+            return;
+        }
+
+        if (token != null &&
+                (token.getType() == TokenType.OR ||
+                        token.getType() == TokenType.COLON ||
+                        token.getType() == TokenType.RPAR)) {
+
+            return;
+        }
+
+        throw error("AND, OR, COLON или RPAR");
     }
 
     /*
@@ -253,13 +409,37 @@ public class DescendingParser {
         <лог_опер> ::== (<лог_выр>)     (()
         <лог_опер> ::== not <лог_опер> (not)
      */
-    private void logicalOperator() {
+    private void logicalOperator() throws ParseException {
+        Token token = current();
 
+        if (token == null) {
+            throw error("NOT, LPAR, IDENTIFIER или LITERAL");
+        }
+
+        switch (token.getType()) {
+            case NOT:
+                expect(TokenType.NOT);
+                logicalOperator();
+                break;
+            case LPAR:
+                expect(TokenType.LPAR);
+                logicalExpression();
+                expect(TokenType.RPAR);
+                break;
+            case IDENTIFIER:
+            case LITERAL:
+                comparison();
+                break;
+            default:
+                throw error("NOT, LPAR, IDENTIFIER или LITERAL");
+        }
     }
 
     //<сравнение> ::== <арифм_выр> <оператор_сравнения> <арифм_выр> (id lit)
-    private void comparison() {
-
+    private void comparison() throws ParseException {
+        arithmeticExpression();
+        comparisonOperator();
+        arithmeticExpression();
     }
 
     /*
@@ -270,8 +450,35 @@ public class DescendingParser {
         <оператор_сравнения> ::== == (==)
         <оператор_сравнения> ::== != (!=)
      */
-    private void comparisonOperator() {
+    private void comparisonOperator() throws ParseException {
+        Token token = current();
 
+        if (token == null) {
+            throw error("оператор сравнения");
+        }
+
+        switch (token.getType()) {
+            case LESS:
+                expect(TokenType.LESS);
+                break;
+            case GREATER:
+                expect(TokenType.GREATER);
+                break;
+            case LESSOREQUAL:
+                expect(TokenType.LESSOREQUAL);
+                break;
+            case GREATEROREQUAL:
+                expect(TokenType.GREATEROREQUAL);
+                break;
+            case EQUAL:
+                expect(TokenType.EQUAL);
+                break;
+            case NOTEQUAL:
+                expect(TokenType.NOTEQUAL);
+                break;
+            default:
+                throw error("оператор сравнения");
+        }
     }
 
     private ParseException error(String expected) {
@@ -299,5 +506,15 @@ public class DescendingParser {
                 "Ожидалось " + expected +
                         ", но обнаружен конец файла.", line, column
         );
+    }
+
+    //TODO: убрать заглушку
+    private void skipExpressionTokens(int count, String expressionName) throws ParseException {
+        for (int i = 0; i < count; i++) {
+            if (current() == null) {
+                throw error("продолжение " + expressionName);
+            }
+            advance();
+        }
     }
 }
