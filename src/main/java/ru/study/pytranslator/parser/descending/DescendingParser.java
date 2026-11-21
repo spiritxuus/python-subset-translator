@@ -2,6 +2,7 @@ package ru.study.pytranslator.parser.descending;
 
 import ru.study.pytranslator.lexer.Token;
 import ru.study.pytranslator.lexer.TokenType;
+import ru.study.pytranslator.parser.ParseException;
 
 import java.util.List;
 
@@ -11,7 +12,7 @@ public class DescendingParser {
 
     public void descendingParser(List<Token> tokens){
         this.tokens = tokens;
-        index = 0;
+        this.index = 0;
     }
 
     // TODO: скорректировать вывод
@@ -21,8 +22,28 @@ public class DescendingParser {
         }
     }
 
-    public Token next(){
-        return tokens.get(this.index);
+    public Token current(){
+        if (index >= tokens.size()) {
+            return null;
+        }
+
+        return tokens.get(index);
+    }
+
+    private void advance() { index++; }
+
+    private Token expect(TokenType expected) throws ParseException {
+        Token token = current();
+
+        if (token == null || token.getType() != expected) {
+            throw new Exception(
+                    "На позиции " + index + ": ожидается " + expected +
+                            ", найдено " + (token == null ? "EOF" : token.getType())
+            );
+        }
+
+        advance();
+        return token;
     }
 
     //<прог > ::== P <спис_опер> (id if)
@@ -32,8 +53,7 @@ public class DescendingParser {
 
     //<спис_опер> ::== <опер> <X> (id if)
     public void operatorList() throws Exception {
-        operator();
-        operatorListTail();
+
     }
 
     /*
@@ -45,15 +65,7 @@ public class DescendingParser {
         <X> - OperatorListTail
      */
     public void operatorListTail() throws Exception {
-        Token tempLexem = next();
-        switch (tempLexem.getType()){
-            case TokenType.IDENTIFIER, TokenType.IF:
-                this.index++;
-                operatorList();
-                break;
-            default:
-                throw new Exception("Error on index : " + this.index);
-        }
+
     }
 
     /*
@@ -61,44 +73,17 @@ public class DescendingParser {
         <опер> ::== <if>   (if)
      */
     public void operator() throws Exception {
-        Token tempLexem = next();
-        switch (tempLexem.getType()){
-            case TokenType.IDENTIFIER:
-                this.index++;
-                assignment();
-                break;
-            case TokenType.IF:
-                this.index++;
-                ifStatement();
-                break;
-            default:
-                throw new Exception("Error on index : " + this.index);
-        }
+
     }
 
     //<if> ::== if <part> <список_elif> (if)
     public void ifStatement() throws Exception {
-        Token tempLexem = next();
 
-        if (tempLexem.getType() != TokenType.IF){
-            throw new Exception("Error on index : " + this.index);
-        }
-        this.index++;
-        part();
-        elseIfList();
     }
 
     //<part> ::== <лог_выр> : P <спис_опер> (id lit ( not)
     public void part() throws Exception {
-        Token tempLexem = next();
-        switch (tempLexem.getType()){
-            case TokenType.IDENTIFIER, TokenType.LITERAL, TokenType.LPAR, TokenType.NOT:
-                this.index++;
-                logicalExpression();
-                break;
-            default:
-                throw new Exception("Error on index : " + this.index);
-        }
+
     }
 
     /*
@@ -107,30 +92,12 @@ public class DescendingParser {
         <список_elif> ::== ε                            #
      */
     public void elseIfList() throws Exception {
-        Token tempLexem = next();
-        switch (tempLexem.getType()){
-            case TokenType.ELIF:
-                this.index++;
-                part();
-                break;
-            case TokenType.ELSE:
-                this.index++;
-                operatorList();
-                break;
-            default:
-                throw new Exception("Error on index : " + this.index);
-        }
+
     }
 
     //<множ> ::== id = <Y> (id)
     public void assignment() throws Exception {
-        Token tempLexem = next();
 
-        if (tempLexem.getType() != TokenType.IDENTIFIER){
-            throw new Exception("Error on index : " + this.index);
-        }
-        this.index++;
-        assignmentTail();
     }
 
     /*
@@ -142,35 +109,12 @@ public class DescendingParser {
         <Y> - AssignmentTail
      */
     public void assignmentTail() throws Exception {
-        Token tempLexem = next();
-        switch (tempLexem.getType()){
-            case TokenType.IDENTIFIER:
-                this.index++;
-                arithmeticExpression();
-                assignment();
-                //??? CHECK AND CORRECT THIS
-                break;
-            case TokenType.LITERAL:
-                this.index++;
-                assignment();
-                break;
-            default:
-                throw new Exception("Error on index : " + this.index);
-        }
+
     }
 
     //<арифм_выр> ::== <elem> <Z> (id lit)
     public void arithmeticExpression() throws Exception {
-        Token tempLexem = next();
-        switch (tempLexem.getType()){
-            case TokenType.IDENTIFIER, TokenType.LITERAL:
-                this.index++;
-                element();
-                arithmeticExpressionTail();
-                break;
-            default:
-                throw new Exception("Error on index : " + this.index);
-        }
+
     }
 
     /*
@@ -181,16 +125,7 @@ public class DescendingParser {
         <Z> - ArithmeticExpressionTail
      */
     public void arithmeticExpressionTail() throws Exception {
-        Token tempLexem = next();
-        switch (tempLexem.getType()){
-            case TokenType.PLUS, TokenType.MINUS, TokenType.DIVISION, TokenType.MULTIPLICATION:
-                this.index++;
-                arithmeticOperator();
-                element();
-                break;
-            default:
-                throw new Exception("Error on index : " + this.index);
-        }
+
     }
 
     /*
@@ -200,14 +135,7 @@ public class DescendingParser {
         <арифм_опер> ::== * (*)
      */
     public void arithmeticOperator() throws Exception {
-        Token tempLexem = next();
-        if (tempLexem.getType() != TokenType.PLUS &&
-                tempLexem.getType() != TokenType.MINUS &&
-                tempLexem.getType() != TokenType.DIVISION &&
-                tempLexem.getType() != TokenType.MULTIPLICATION){
-            throw new Exception("Error on index : " + this.index);
-        }
-        next();
+
     }
 
     /*
@@ -215,26 +143,12 @@ public class DescendingParser {
         <elem> ::== lit (id)
      */
     public void element() throws Exception {
-        Token tempLexem = next();
-        if (tempLexem.getType() != TokenType.IDENTIFIER &&
-                tempLexem.getType() != TokenType.LITERAL){
-            throw new Exception("Error on index : " + this.index);
-        }
-        next();
+
     }
 
     //<лог_выр> ::== <лог_и> <C> (id lit ( not)
     public void logicalExpression() throws Exception {
-        Token tempLexem = next();
-        switch (tempLexem.getType()){
-            case TokenType.IDENTIFIER, TokenType.LITERAL, TokenType.LPAR, TokenType.NOT:
-                this.index++;
-                logicalAnd();
-                logicalExpressionTail();
-                break;
-            default:
-                throw new Exception("Error on index : " + this.index);
-        }
+
     }
 
     /*
@@ -246,29 +160,12 @@ public class DescendingParser {
        <C> - LogicalExpressionTail
     */
     public void logicalExpressionTail() throws Exception {
-        Token tempLexem = next();
-        switch (tempLexem.getType()){
-            case TokenType.IDENTIFIER, TokenType.LITERAL, TokenType.LPAR, TokenType.NOT:
-                this.index++;
-                logicalExpression();
-                break;
-            default:
-                throw new Exception("Error on index : " + this.index);
-        }
+
     }
 
     //<лог_и> ::== <лог_опер> <V> (id lit ( not)
     public void logicalAnd() throws Exception {
-        Token tempLexem = next();
-        switch (tempLexem.getType()){
-            case TokenType.IDENTIFIER, TokenType.LITERAL, TokenType.LPAR, TokenType.NOT:
-                this.index++;
-                logicalOperator();
-                logicalAndTail();
-                break;
-            default:
-                throw new Exception("Error on index : " + this.index);
-        }
+
     }
 
     /*
@@ -280,15 +177,7 @@ public class DescendingParser {
         <V> - LogicalAndTail
      */
     public void logicalAndTail() throws Exception {
-        Token tempLexem = next();
-        switch (tempLexem.getType()){
-            case TokenType.IDENTIFIER, TokenType.LITERAL, TokenType.LPAR, TokenType.NOT:
-                this.index++;
-                logicalAnd();
-                break;
-            default:
-                throw new Exception("Error on index : " + this.index);
-        }
+
     }
 
     /*
@@ -297,30 +186,12 @@ public class DescendingParser {
         <лог_опер> ::== not <лог_опер> (not)
      */
     public void logicalOperator() throws Exception {
-        Token tempLexem = next();
-        switch (tempLexem.getType()){
-            case TokenType.IDENTIFIER, TokenType.LITERAL:
-                this.index++;
-                comparison();
-                break;
-            case TokenType.LPAR:
-                this.index++;
-                logicalExpression();
-                break;
-            case TokenType.NOT:
-                this.index++;
-                logicalOperator();
-                break;
-            default:
-                throw new Exception("Error on index : " + this.index);
-        }
+
     }
 
     //<сравнение> ::== <арифм_выр> <оператор_сравнения> <арифм_выр> (id lit)
     public void comparison() throws Exception {
-        arithmeticExpression();
-        comparisonOperator();
-        arithmeticExpression();
+
     }
 
     /*
@@ -332,15 +203,6 @@ public class DescendingParser {
         <оператор_сравнения> ::== != (!=)
      */
     public void comparisonOperator() throws Exception {
-        Token tempLexem = next();
-        if (tempLexem.getType() != TokenType.LESS &&
-                tempLexem.getType() != TokenType.GREATER &&
-                tempLexem.getType() != TokenType.LESSOREQUAL &&
-                tempLexem.getType() != TokenType.GREATEROREQUAL &&
-                tempLexem.getType() != TokenType.EQUAL &&
-                tempLexem.getType() != TokenType.NOTEQUAL){
-            throw new Exception("Error on index : " + this.index);
-        }
-        next();
+
     }
 }
