@@ -5,6 +5,7 @@ import ru.study.pytranslator.lexer.TokenType;
 import ru.study.pytranslator.parser.ParseException;
 import java.util.*;
 
+//TODO: перепроверить вывод ошибок, проверить переходы, подробные тесты на нескольких вариантах
 public class AscendingParser {
     private final List<Token> tokens;
     private int nextToken;
@@ -43,25 +44,74 @@ public class AscendingParser {
                                 "Возможен бесконечный цикл."
                 );
             }
-        }
 
-        executeState();
+            executeState();
+        }
     }
 
     private void executeState() throws ParseException {
-        switch (state){
-            case 0:
-                state0();
-                break;
-            case 1:
-                state1();
-                break;
-                //TODO: дописать все состояния
-
+        switch (state) {
+            case 0: state0(); break;
+            case 1: state1(); break;
+            case 2: state2(); break;
+            case 3: state3(); break;
+            case 4: state4(); break;
+            case 5: state5(); break;
+            case 6: state6(); break;
+            case 7: state7(); break;
+            case 8: state8(); break;
+            case 9: state9(); break;
+            case 10: state10(); break;
+            case 11: state11(); break;
+            case 12: state12(); break;
+            case 13: state13(); break;
+            case 14: state14(); break;
+            case 15: state15(); break;
+            case 16: state16(); break;
+            case 17: state17(); break;
+            case 18: state18(); break;
+            case 19: state19(); break;
+            case 20: state20(); break;
+            case 21: state21(); break;
+            case 22: state22(); break;
+            case 23: state23(); break;
+            case 24: state24(); break;
+            case 25: state25(); break;
+            case 26: state26(); break;
+            case 27: state27(); break;
+            case 28: state28(); break;
+            case 29: state29(); break;
+            case 30: state30(); break;
+            case 31: state31(); break;
+            case 32: state32(); break;
+            case 33: state33(); break;
+            case 34: state34(); break;
+            case 35: state35(); break;
+            case 36: state36(); break;
+            case 37: state37(); break;
+            case 38: state38(); break;
+            case 39: state39(); break;
+            case 40: state40(); break;
+            case 41: state41(); break;
+            case 42: state42(); break;
+            case 43: state43(); break;
+            case 44: state44(); break;
+            case 45: state45(); break;
+            case 46: state46(); break;
+            case 47: state47(); break;
+            case 48: state48(); break;
+            case 49: state49(); break;
+            case 50: state50(); break;
+            case 51: state51(); break;
+            case 52: state52(); break;
+            case 53: state53(); break;
+            case 54: state54(); break;
+            case 55: state55(); break;
+            case 56: state56(); break;
+            case 57: state57(); break;
+            case 58: state58(); break;
             default:
-                throw new IllegalStateException(
-                        "Состояние " + state + " не реализовано."
-                );
+                throw new IllegalStateException("Неизвестное состояние автомата: " + state);
         }
     }
 
@@ -244,6 +294,30 @@ public class AscendingParser {
         }
 
         return result;
+    }
+
+    private boolean isArithmeticExpressionFollow(Token token) {
+        if (token == null) {
+            return true;
+        }
+
+        switch (token.getType()) {
+            case P:
+            case COMMA:
+            case LESS:
+            case GREATER:
+            case LESSOREQUAL:
+            case GREATEROREQUAL:
+            case EQUAL:
+            case NOTEQUAL:
+            case AND:
+            case OR:
+            case COLON:
+            case RPAR:
+                return true;
+            default:
+                return false;
+        }
     }
 
     private void state0() throws ParseException {
@@ -494,24 +568,21 @@ public class AscendingParser {
         switch (topSymbol()) {
             case "<elem>":
                 Token next = currentInput();
-                if (next.getType() == TokenType.PLUS ||
-                        next.getType() == TokenType.MINUS ||
-                        next.getType() == TokenType.DIVISION ||
-                        next.getType() == TokenType.MULTIPLICATION) {
+                if (next != null && (
+                        next.getType() == TokenType.PLUS ||
+                                next.getType() == TokenType.MINUS ||
+                                next.getType() == TokenType.DIVISION ||
+                                next.getType() == TokenType.MULTIPLICATION)) {
                     shift(TokenType.PLUS, TokenType.MINUS, TokenType.DIVISION, TokenType.MULTIPLICATION);
                     break;
                 }
 
-                if (next.getType() != TokenType.P){
-                    throw error("P или конец файла");
-                }
-
-                if (next.getType() == TokenType.P){
-                    popIndentLevel();
+                if (isArithmeticExpressionFollow(next)) {
                     reduce(1, "<арифм_выр>");
+                    break;
                 }
+                throw error("арифметический оператор или допустимый символ завершения выражения");
 
-                break;
             case "<арифм_опер>":
                 goToState(16);
                 break;
@@ -528,7 +599,7 @@ public class AscendingParser {
                 goToState(23);
                 break;
             default:
-                throw error("<elem> или +-/*");
+                throw error("<elem> или арифметический оператор");
         }
     }
 
@@ -564,7 +635,7 @@ public class AscendingParser {
             reduce(1, "<elem>");
             return;
         }
-        throw error("<id>");
+        throw error("id");
     }
 
     private void state19() throws ParseException {
@@ -654,18 +725,27 @@ public class AscendingParser {
         switch (topSymbol()) {
             case "<part>":
                 Token next = currentInput();
+                if (next == null) {
+                    popIndentLevel();
+                    reduce(0, "<список_elif>");
+                    break;
+                }
 
                 if (next.getType() != TokenType.P) {
                     throw error("P или конец файла");
                 }
 
                 if (isIndentGreaterOrEqual()) {
-                    shift(TokenType.ELIF, TokenType.ELSE);
-                } else {
+                    shift(TokenType.P);
+                }
+                else {
                     popIndentLevel();
-                    reduce(0, "<спис_elif>");
+                    reduce(0, "<список_elif>");
                 }
 
+                break;
+            case "P":
+                shift(TokenType.ELIF, TokenType.ELSE);
                 break;
             case "<список_elif>":
                 goToState(26);
@@ -677,7 +757,7 @@ public class AscendingParser {
                 goToState(54);
                 break;
             default:
-                throw error("<part>, elif или else");
+                throw error("<part>, P, elif или else");
         }
     }
 
@@ -722,6 +802,9 @@ public class AscendingParser {
         switch (topSymbol()) {
             case "P":
                 shift(TokenType.IDENTIFIER, TokenType.IF);
+                break;
+            case "<спис_опер>":
+                goToState(30);
                 break;
             case "<опер>":
                 goToState(2);
@@ -874,7 +957,24 @@ public class AscendingParser {
     private void state37() throws ParseException {
         switch (topSymbol()) {
             case "(":
-                shift(TokenType.LPAR, TokenType.NOT, TokenType.IDENTIFIER, TokenType.LITERAL);
+                Token next = currentInput();
+                if (next == null) {
+                    throw error("логическое выражение внутри скобок");
+                }
+
+                if (next.getType() == TokenType.LPAR) {
+                    shift(TokenType.LPAR);
+                    goToState(37);
+                }
+                else {
+
+                    shift(
+                            TokenType.NOT,
+                            TokenType.IDENTIFIER,
+                            TokenType.LITERAL
+                    );
+                }
+
                 break;
             case "<лог_выр>":
                 goToState(38);
@@ -887,9 +987,6 @@ public class AscendingParser {
                 break;
             case "<сравнение>":
                 goToState(36);
-                break;
-            case "(":
-                goToState(37);
                 break;
             case "not":
                 goToState(40);
@@ -907,7 +1004,7 @@ public class AscendingParser {
                 goToState(19);
                 break;
             default:
-                throw error("or, (, not, id или lit");
+                throw error("(, not, id, lit или соответствующий нетерминал");
         }
     }
 
@@ -938,7 +1035,19 @@ public class AscendingParser {
     private void state40() throws ParseException {
         switch (topSymbol()) {
             case "not":
-                shift(TokenType.LPAR, TokenType.NOT, TokenType.IDENTIFIER, TokenType.LITERAL);
+                Token next = currentInput();
+                if (next == null) {
+                    throw error("not, (, id или lit");
+                }
+
+                if (next.getType() == TokenType.NOT) {
+                    shift(TokenType.NOT);
+                    goToState(40);
+                }
+                else {
+                    shift(TokenType.LPAR, TokenType.IDENTIFIER, TokenType.LITERAL);
+                }
+
                 break;
             case "<лог_опер>":
                 goToState(41);
@@ -948,9 +1057,6 @@ public class AscendingParser {
                 break;
             case "(":
                 goToState(37);
-                break;
-            case "not":
-                goToState(40);
                 break;
             case "<арифм_выр>":
                 goToState(42);
@@ -965,7 +1071,7 @@ public class AscendingParser {
                 goToState(19);
                 break;
             default:
-                throw error("or, (, not, id или lit");
+                throw error("not, (, id или lit");
         }
     }
 
@@ -981,7 +1087,7 @@ public class AscendingParser {
         switch (topSymbol()) {
             case "<арифм_выр>":
                 shift(TokenType.LESS, TokenType.GREATER, TokenType.LESSOREQUAL,
-                        TokenType.GREATEROREQUAL,  TokenType.ASSIGNMENT,  TokenType.NOTEQUAL);
+                        TokenType.GREATEROREQUAL,  TokenType.EQUAL,  TokenType.NOTEQUAL);
                 break;
             case "<оператор_сравнения>":
                 goToState(49);
@@ -1135,19 +1241,26 @@ public class AscendingParser {
             case "<part>":
                 Token next = currentInput();
                 if (next == null) {
-                    shift(TokenType.ELIF, TokenType.ELSE);
+                    popIndentLevel();
+                    reduce(0, "<список_elif>");
                     break;
                 }
 
-                if (next.getType() != TokenType.P){
+                if (next.getType() != TokenType.P) {
                     throw error("P или конец файла");
                 }
 
-                if (next.getType() == TokenType.P) {
+                if (isIndentGreaterOrEqual()) {
+                    shift(TokenType.P);
+                }
+                else {
                     popIndentLevel();
-                    reduce(0, "<спис_elif>");
+                    reduce(0, "<список_elif>");
                 }
 
+                break;
+            case "P":
+                shift(TokenType.ELIF, TokenType.ELSE);
                 break;
             case "<список_elif>":
                 goToState(53);
@@ -1159,7 +1272,7 @@ public class AscendingParser {
                 goToState(54);
                 break;
             default:
-                throw error("elif или else");
+                throw error("P, elif или else");
         }
     }
 
@@ -1227,9 +1340,14 @@ public class AscendingParser {
 
     private void state57() throws ParseException {
         if ("<спис_опер>".equals(topSymbol())) {
+            if (currentInput() == null) {
+                popIndentLevel();
+            }
+
             reduce(4, "<список_elif>");
             return;
         }
+
         throw error("<спис_опер>");
     }
 
