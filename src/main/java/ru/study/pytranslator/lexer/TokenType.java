@@ -11,5 +11,7 @@ public enum TokenType {
 
     LPAR, RPAR, COMMA, COLON,
 
-    NEWLINE, INDENT, DEDENT
+    NEWLINE, INDENT, DEDENT,
+
+    P
 }
