@@ -331,7 +331,7 @@ public class AscendingParser {
                 shift(TokenType.IDENTIFIER, TokenType.IF);
                 break;
             case "<спис_опер>":
-                goToState(7);
+                goToState(4);
                 break;
             case "<опер>":
                 goToState(2);
@@ -351,7 +351,6 @@ public class AscendingParser {
             default:
                 throw error("P, id, if или допустимый нетерминал");
         }
-        //TODO: или state1()?
     }
 
     private void state4() throws ParseException {
@@ -493,10 +492,13 @@ public class AscendingParser {
 
     private void state15() throws ParseException {
         switch (topSymbol()) {
-            case "<опер>":
+            case "<elem>":
                 Token next = currentInput();
-                if (next == null) {
-                    reduce(1, "<спис_опер>");
+                if (next.getType() == TokenType.PLUS ||
+                        next.getType() == TokenType.MINUS ||
+                        next.getType() == TokenType.DIVISION ||
+                        next.getType() == TokenType.MULTIPLICATION) {
+                    shift(TokenType.PLUS, TokenType.MINUS, TokenType.DIVISION, TokenType.MULTIPLICATION);
                     break;
                 }
 
@@ -504,20 +506,743 @@ public class AscendingParser {
                     throw error("P или конец файла");
                 }
 
-                if (isIndentGreaterOrEqual()) {
-                    shift(TokenType.P);
-                }
-                else {
+                if (next.getType() == TokenType.P){
                     popIndentLevel();
-                    reduce(1, "<спис_опер>");
+                    reduce(1, "<арифм_выр>");
                 }
 
                 break;
-            case "P":
-                goToState(3);
+            case "<арифм_опер>":
+                goToState(16);
+                break;
+            case "+":
+                goToState(20);
+                break;
+            case "-":
+                goToState(21);
+                break;
+            case "/":
+                goToState(22);
+                break;
+            case "*":
+                goToState(23);
                 break;
             default:
-                throw error("<опер> или P");
+                throw error("<elem> или +-/*");
+        }
+    }
+
+    private void state16() throws ParseException {
+        switch (topSymbol()) {
+            case "<арифм_опер>":
+                shift(TokenType.IDENTIFIER, TokenType.LITERAL);
+                break;
+            case "<elem>":
+                goToState(17);
+                break;
+            case "id":
+                goToState(18);
+                break;
+            case "lit":
+                goToState(19);
+                break;
+            default:
+                throw error("id или lit");
+        }
+    }
+
+    private void state17() throws ParseException {
+        if ("<elem>".equals(topSymbol())) {
+            reduce(3, "<арифм_выр>");
+            return;
+        }
+        throw error("<elem>");
+    }
+
+    private void state18() throws ParseException {
+        if ("id".equals(topSymbol())) {
+            reduce(1, "<elem>");
+            return;
+        }
+        throw error("<id>");
+    }
+
+    private void state19() throws ParseException {
+        if ("lit".equals(topSymbol())) {
+            reduce(1, "<elem>");
+            return;
+        }
+        throw error("lit");
+    }
+
+    private void state20() throws ParseException {
+        if ("+".equals(topSymbol())) {
+            reduce(1, "<арифм_опер>");
+            return;
+        }
+        throw error("+");
+    }
+
+    private void state21() throws ParseException {
+        if ("-".equals(topSymbol())) {
+            reduce(1, "<арифм_опер>");
+            return;
+        }
+        throw error("-");
+    }
+
+    private void state22() throws ParseException {
+        if ("/".equals(topSymbol())) {
+            reduce(1, "<арифм_опер>");
+            return;
+        }
+        throw error("/");
+    }
+
+    private void state23() throws ParseException {
+        if ("*".equals(topSymbol())) {
+            reduce(1, "<арифм_опер>");
+            return;
+        }
+        throw error("*");
+    }
+
+    private void state24() throws ParseException {
+        switch (topSymbol()) {
+            case "if":
+                shift(TokenType.LPAR, TokenType.NOT, TokenType.IDENTIFIER, TokenType.LITERAL);
+                break;
+            case "<part>":
+                goToState(25);
+                break;
+            case "<лог_выр>":
+                goToState(27);
+                break;
+            case "<лог_и>":
+                goToState(32);
+                break;
+            case "<лог_опер>":
+                goToState(35);
+                break;
+            case "<сравнение>":
+                goToState(36);
+                break;
+            case "(":
+                goToState(37);
+                break;
+            case "not":
+                goToState(40);
+                break;
+            case "<арифм_выр>":
+                goToState(42);
+                break;
+            case "<elem>":
+                goToState(15);
+                break;
+            case "id":
+                goToState(18);
+                break;
+            case "lit":
+                goToState(19);
+                break;
+            default:
+                throw error("if, (, not, id или lit");
+        }
+    }
+
+    private void state25() throws ParseException {
+        switch (topSymbol()) {
+            case "<part>":
+                Token next = currentInput();
+
+                if (next.getType() != TokenType.P) {
+                    throw error("P или конец файла");
+                }
+
+                if (isIndentGreaterOrEqual()) {
+                    shift(TokenType.ELIF, TokenType.ELSE);
+                } else {
+                    popIndentLevel();
+                    reduce(0, "<спис_elif>");
+                }
+
+                break;
+            case "<список_elif>":
+                goToState(26);
+                break;
+            case "elif":
+                goToState(51);
+                break;
+            case "else":
+                goToState(54);
+                break;
+            default:
+                throw error("<part>, elif или else");
+        }
+    }
+
+    private void state26() throws ParseException {
+        if ("<список_elif>".equals(topSymbol())) {
+            reduce(3, "<if>");
+            return;
+        }
+        throw error("<список_elif>");
+    }
+
+    private void state27() throws ParseException {
+        switch (topSymbol()) {
+            case "<лог_выр>":
+                shift(TokenType.COLON, TokenType.OR);
+                break;
+            case ":":
+                goToState(28);
+                break;
+            case "or":
+                goToState(31);
+                break;
+            default:
+                throw error(": или or");
+        }
+    }
+
+    private void state28() throws ParseException {
+        switch (topSymbol()) {
+            case ":":
+                shift(TokenType.P);
+                break;
+            case "P":
+                goToState(29);
+                break;
+            default:
+                throw error(": или P");
+        }
+    }
+
+    private void state29() throws ParseException {
+        switch (topSymbol()) {
+            case "P":
+                shift(TokenType.IDENTIFIER, TokenType.IF);
+                break;
+            case "<опер>":
+                goToState(2);
+                break;
+            case "<множ>":
+                goToState(5);
+                break;
+            case "<if>":
+                goToState(6);
+                break;
+            case "if":
+                goToState(24);
+                break;
+            case "id":
+                goToState(8);
+                break;
+            default:
+                throw error("P, id, if или допустимый нетерминал");
+        }
+    }
+
+    private void state30() throws ParseException {
+        if ("<спис_опер>".equals(topSymbol())) {
+            reduce(4, "<part>");
+            return;
+        }
+        throw error("<спис_опер>");
+    }
+
+    private void state31() throws ParseException {
+        switch (topSymbol()) {
+            case "or":
+                shift(TokenType.LPAR, TokenType.NOT, TokenType.IDENTIFIER, TokenType.LITERAL);
+                break;
+            case "<лог_и>":
+                goToState(58);
+                break;
+            case "<лог_опер>":
+                goToState(35);
+                break;
+            case "<сравнение>":
+                goToState(36);
+                break;
+            case "(":
+                goToState(37);
+                break;
+            case "not":
+                goToState(40);
+                break;
+            case "<арифм_выр>":
+                goToState(42);
+                break;
+            case "<elem>":
+                goToState(15);
+                break;
+            case "id":
+                goToState(18);
+                break;
+            case "lit":
+                goToState(19);
+                break;
+            default:
+                throw error("or, (, not, id или lit");
+        }
+    }
+
+    private void state32() throws ParseException {
+        switch (topSymbol()) {
+            case "<лог_и>":
+                Token next = currentInput();
+                if (next.getType() == TokenType.LPAR ||
+                        next.getType() == TokenType.OR ||
+                        next.getType() == TokenType.COLON) {
+                    reduce(1, "<лог_выр>");
+                    break;
+                }
+
+                if (next.getType() == TokenType.AND) {
+                    shift(TokenType.LPAR, TokenType.OR, TokenType.COLON);
+                    break;
+                }
+
+                if (next.getType() != TokenType.P) {
+                    throw error("P или конец файла");
+                }
+                break;
+            default:
+                throw error("or, (, not, id или lit");
+        }
+    }
+
+    private void state33() throws ParseException {
+        switch (topSymbol()) {
+            case "and":
+                shift(TokenType.LPAR, TokenType.NOT, TokenType.IDENTIFIER, TokenType.LITERAL);
+                break;
+            case "<лог_опер>":
+                goToState(34);
+                break;
+            case "<сравнение>":
+                goToState(36);
+                break;
+            case "(":
+                goToState(37);
+                break;
+            case "not":
+                goToState(40);
+                break;
+            case "<арифм_выр>":
+                goToState(42);
+                break;
+            case "<elem>":
+                goToState(15);
+                break;
+            case "id":
+                goToState(18);
+                break;
+            case "lit":
+                goToState(19);
+                break;
+            default:
+                throw error("or, (, not, id или lit");
+        }
+    }
+
+    private void state34() throws ParseException {
+        if ("<лог_опер>".equals(topSymbol())) {
+            reduce(3, "<лог_и>");
+            return;
+        }
+        throw error("<лог_опер>");
+    }
+
+    private void state35() throws ParseException {
+        if ("<лог_опер>".equals(topSymbol())) {
+            reduce(1, "<лог_и>");
+            return;
+        }
+        throw error("<лог_опер>");
+    }
+
+    private void state36() throws ParseException {
+        if ("<сравнение>".equals(topSymbol())) {
+            reduce(1, "<лог_и>");
+            return;
+        }
+        throw error("<сравнение>");
+    }
+
+    private void state37() throws ParseException {
+        switch (topSymbol()) {
+            case "(":
+                shift(TokenType.LPAR, TokenType.NOT, TokenType.IDENTIFIER, TokenType.LITERAL);
+                break;
+            case "<лог_выр>":
+                goToState(38);
+                break;
+            case "<лог_и>":
+                goToState(32);
+                break;
+            case "<лог_опер>":
+                goToState(35);
+                break;
+            case "<сравнение>":
+                goToState(36);
+                break;
+            case "(":
+                goToState(37);
+                break;
+            case "not":
+                goToState(40);
+                break;
+            case "<арифм_выр>":
+                goToState(42);
+                break;
+            case "<elem>":
+                goToState(15);
+                break;
+            case "id":
+                goToState(18);
+                break;
+            case "lit":
+                goToState(19);
+                break;
+            default:
+                throw error("or, (, not, id или lit");
+        }
+    }
+
+    private void state38() throws ParseException {
+        switch (topSymbol()) {
+            case "<лог_выр>":
+                shift(TokenType.RPAR, TokenType.OR);
+                break;
+            case ")":
+                goToState(39);
+                break;
+            case "or":
+                goToState(31);
+                break;
+            default:
+                throw error("or или )");
+        }
+    }
+
+    private void state39() throws ParseException {
+        if (")".equals(topSymbol())) {
+            reduce(3, "<лог_опер>");
+            return;
+        }
+        throw error(")");
+    }
+
+    private void state40() throws ParseException {
+        switch (topSymbol()) {
+            case "not":
+                shift(TokenType.LPAR, TokenType.NOT, TokenType.IDENTIFIER, TokenType.LITERAL);
+                break;
+            case "<лог_опер>":
+                goToState(41);
+                break;
+            case "<сравнение>":
+                goToState(36);
+                break;
+            case "(":
+                goToState(37);
+                break;
+            case "not":
+                goToState(40);
+                break;
+            case "<арифм_выр>":
+                goToState(42);
+                break;
+            case "<elem>":
+                goToState(15);
+                break;
+            case "id":
+                goToState(18);
+                break;
+            case "lit":
+                goToState(19);
+                break;
+            default:
+                throw error("or, (, not, id или lit");
+        }
+    }
+
+    private void state41() throws ParseException {
+        if ("<лог_опер>".equals(topSymbol())) {
+            reduce(2, "<лог_опер>");
+            return;
+        }
+        throw error("<лог_опер>");
+    }
+
+    private void state42() throws ParseException {
+        switch (topSymbol()) {
+            case "<арифм_выр>":
+                shift(TokenType.LESS, TokenType.GREATER, TokenType.LESSOREQUAL,
+                        TokenType.GREATEROREQUAL,  TokenType.ASSIGNMENT,  TokenType.NOTEQUAL);
+                break;
+            case "<оператор_сравнения>":
+                goToState(49);
+                break;
+            case "<":
+                goToState(43);
+                break;
+            case ">":
+                goToState(44);
+                break;
+            case "<=":
+                goToState(45);
+                break;
+            case ">=":
+                goToState(46);
+                break;
+            case "==":
+                goToState(47);
+                break;
+            case "!=":
+                goToState(48);
+                break;
+            default:
+                throw error("< > <= >= == или !=");
+        }
+    }
+
+    private void state43() throws ParseException {
+        if ("<".equals(topSymbol())) {
+            reduce(1, "<оператор_сравнения>");
+            return;
+        }
+        throw error("<");
+    }
+
+    private void state44() throws ParseException {
+        if (">".equals(topSymbol())) {
+            reduce(1, "<оператор_сравнения>");
+            return;
+        }
+        throw error(">");
+    }
+
+    private void state45() throws ParseException {
+        if ("<=".equals(topSymbol())) {
+            reduce(1, "<оператор_сравнения>");
+            return;
+        }
+        throw error("<=");
+    }
+
+    private void state46() throws ParseException {
+        if (">=".equals(topSymbol())) {
+            reduce(1, "<оператор_сравнения>");
+            return;
+        }
+        throw error(">=");
+    }
+
+    private void state47() throws ParseException {
+        if ("==".equals(topSymbol())) {
+            reduce(1, "<оператор_сравнения>");
+            return;
+        }
+        throw error("==");
+    }
+
+    private void state48() throws ParseException {
+        if ("!=".equals(topSymbol())) {
+            reduce(1, "<оператор_сравнения>");
+            return;
+        }
+        throw error("!=");
+    }
+
+    private void state49() throws ParseException {
+        switch (topSymbol()) {
+            case "<оператор_сравнения>":
+                shift(TokenType.IDENTIFIER, TokenType.LITERAL);
+                break;
+            case "<арифм_выр>":
+                goToState(50);
+                break;
+            case "<elem>":
+                goToState(15);
+                break;
+            case "id":
+                goToState(18);
+                break;
+            case "lit":
+                goToState(19);
+                break;
+            default:
+                throw error("id или lit");
+        }
+    }
+
+    private void state50() throws ParseException {
+        if ("<арифм_выр>".equals(topSymbol())) {
+            reduce(3, "<сравнение>");
+            return;
+        }
+        throw error("<арифм_выр>");
+    }
+
+    private void state51() throws ParseException {
+        switch (topSymbol()) {
+            case "elif":
+                shift(TokenType.LPAR, TokenType.NOT, TokenType.IDENTIFIER, TokenType.LITERAL);
+                break;
+            case "<part>":
+                goToState(52);
+                break;
+            case "<лог_выр>":
+                goToState(27);
+                break;
+            case "<лог_и>":
+                goToState(32);
+                break;
+            case "<лог_опер>":
+                goToState(35);
+                break;
+            case "<сравнение>":
+                goToState(36);
+                break;
+            case "(":
+                goToState(37);
+                break;
+            case "not":
+                goToState(40);
+                break;
+            case "<арифм_выр>":
+                goToState(42);
+                break;
+            case "<elem>":
+                goToState(15);
+                break;
+            case "id":
+                goToState(18);
+                break;
+            case "lit":
+                goToState(19);
+                break;
+            default:
+                throw error("or, (, not, id или lit");
+        }
+    }
+
+    private void state52() throws ParseException {
+        switch (topSymbol()) {
+            case "<part>":
+                Token next = currentInput();
+                if (next == null) {
+                    shift(TokenType.ELIF, TokenType.ELSE);
+                    break;
+                }
+
+                if (next.getType() != TokenType.P){
+                    throw error("P или конец файла");
+                }
+
+                if (next.getType() == TokenType.P) {
+                    popIndentLevel();
+                    reduce(0, "<спис_elif>");
+                }
+
+                break;
+            case "<список_elif>":
+                goToState(53);
+                break;
+            case "elif":
+                goToState(51);
+                break;
+            case "else":
+                goToState(54);
+                break;
+            default:
+                throw error("elif или else");
+        }
+    }
+
+    private void state53() throws ParseException {
+        if ("<список_elif>".equals(topSymbol())) {
+            reduce(3, "<список_elif>");
+            return;
+        }
+        throw error("<список_elif>");
+    }
+
+    private void state54() throws ParseException {
+        switch (topSymbol()) {
+            case "else":
+                shift(TokenType.COLON);
+                break;
+            case ":":
+                goToState(55);
+                break;
+            default:
+                throw error("else или :");
+        }
+    }
+
+    private void state55() throws ParseException {
+        switch (topSymbol()) {
+            case ":":
+                shift(TokenType.P);
+                break;
+            case "P":
+                goToState(56);
+                break;
+            default:
+                throw error(": или P");
+        }
+    }
+
+    private void state56() throws ParseException {
+        switch (topSymbol()) {
+            case "P":
+                shift(TokenType.IDENTIFIER, TokenType.IF);
+                break;
+            case "<спис_опер>":
+                goToState(57);
+                break;
+            case "<опер>":
+                goToState(2);
+                break;
+            case "<множ>":
+                goToState(5);
+                break;
+            case "<if>":
+                goToState(6);
+                break;
+            case "if":
+                goToState(24);
+                break;
+            case "id":
+                goToState(8);
+                break;
+            default:
+                throw error("P, id, if или допустимый нетерминал");
+        }
+    }
+
+    private void state57() throws ParseException {
+        if ("<спис_опер>".equals(topSymbol())) {
+            reduce(4, "<список_elif>");
+            return;
+        }
+        throw error("<спис_опер>");
+    }
+
+    private void state58() throws ParseException {
+        switch (topSymbol()) {
+            case "<лог_и>":
+                shift(TokenType.AND);
+                break;
+            case "and":
+                goToState(33);
+                break;
+            default:
+                throw error("and");
         }
     }
 }
