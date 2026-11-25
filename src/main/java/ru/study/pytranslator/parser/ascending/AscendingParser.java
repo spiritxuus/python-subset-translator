@@ -3,7 +3,6 @@ package ru.study.pytranslator.parser.ascending;
 import ru.study.pytranslator.lexer.Token;
 import ru.study.pytranslator.lexer.TokenType;
 import ru.study.pytranslator.parser.ParseException;
-
 import java.util.*;
 
 public class AscendingParser {
@@ -74,7 +73,7 @@ public class AscendingParser {
 
         boolean matches = false;
         for (TokenType type : expected) {
-            if (token.getType() == type){
+            if (token.getType() == type) {
                 matches = true;
                 break;
             }
@@ -89,7 +88,6 @@ public class AscendingParser {
         }
 
         lexemeStack.push(new StackSymbol(toGrammarSymbol(token), token));
-
         nextToken++;
     }
 
@@ -113,7 +111,6 @@ public class AscendingParser {
         }
 
         lexemeStack.push(new StackSymbol(nonterminal, null));
-
         state = stateStack.peek();
     }
 
@@ -146,7 +143,6 @@ public class AscendingParser {
 
     private void updateIndentStack(Token token) throws ParseException {
         int indent;
-
         try {
             indent = Integer.parseInt(token.getValue());
         }
@@ -155,7 +151,6 @@ public class AscendingParser {
         }
 
         int currentIndent = indentStack.peek();
-
         if (indent < currentIndent) {
             throw error("сначала необходимо выполнить свёртку и закрыть уровень отступа");
         }
@@ -178,7 +173,6 @@ public class AscendingParser {
 
     private int currentIndent() throws ParseException{
         Token token = currentInput();
-
         if (token == null || token.getType() != TokenType.P) {
             throw error("ожидался маркер P");
         }
@@ -229,7 +223,6 @@ public class AscendingParser {
 
     private static List<Token> prepareTokens(List<Token> source) {
         List<Token> result = new ArrayList<>();
-
         boolean lineStart = true;
 
         for (Token token : source){
@@ -251,5 +244,280 @@ public class AscendingParser {
         }
 
         return result;
+    }
+
+    private void state0() throws ParseException {
+        if (lexemeStack.isEmpty()){
+            shift(TokenType.P);
+            return;
+        }
+
+        switch (topSymbol()) {
+            case "P":
+                goToState(1);
+                break;
+            case "<прог>":
+                if (currentInput() != null) {
+                    throw error("конец файла");
+                }
+                isAccepted = true;
+                break;
+            default:
+                throw error("P или <прог>");
+        }
+    }
+
+    private void state1() throws ParseException {
+        switch (topSymbol()) {
+            case "P":
+                shift(TokenType.IDENTIFIER, TokenType.IF);
+                break;
+            case "<спис_опер>":
+                goToState(7);
+                break;
+            case "<опер>":
+                goToState(2);
+                break;
+            case "<множ>":
+                goToState(5);
+                break;
+            case "<if>":
+                goToState(6);
+                break;
+            case "if":
+                goToState(24);
+                break;
+            case "id":
+                goToState(8);
+                break;
+            default:
+                throw error("P, id, if или допустимый нетерминал");
+        }
+    }
+
+    private void state2() throws ParseException {
+        switch (topSymbol()) {
+            case "<опер>":
+                Token next = currentInput();
+                if (next == null) {
+                    reduce(1, "<спис_опер>");
+                    break;
+                }
+
+                if (next.getType() != TokenType.P){
+                    throw error("P или конец файла");
+                }
+
+                if (isIndentGreaterOrEqual()) {
+                    shift(TokenType.P);
+                }
+                else {
+                    popIndentLevel();
+                    reduce(1, "<спис_опер>");
+                }
+
+                break;
+            case "P":
+                goToState(3);
+                break;
+            default:
+                throw error("<опер> или P");
+        }
+    }
+
+    private void state3() throws ParseException {
+        switch (topSymbol()) {
+            case "P":
+                shift(TokenType.IDENTIFIER, TokenType.IF);
+                break;
+            case "<спис_опер>":
+                goToState(7);
+                break;
+            case "<опер>":
+                goToState(2);
+                break;
+            case "<множ>":
+                goToState(5);
+                break;
+            case "<if>":
+                goToState(6);
+                break;
+            case "if":
+                goToState(24);
+                break;
+            case "id":
+                goToState(8);
+                break;
+            default:
+                throw error("P, id, if или допустимый нетерминал");
+        }
+        //TODO: или state1()?
+    }
+
+    private void state4() throws ParseException {
+        if ("<спис_опер>".equals(topSymbol())) {
+            reduce(3, "<спис_опер>");
+            return;
+        }
+        throw error("<спис_опер>");
+    }
+
+    private void state5() throws ParseException {
+        if ("<множ>".equals(topSymbol())) {
+            reduce(1, "<опер>");
+            return;
+        }
+        throw error("<множ>");
+    }
+
+    private void state6() throws ParseException {
+        if ("<if>".equals(topSymbol())) {
+            reduce(1, "<опер>");
+            return;
+        }
+        throw error("<if>");
+    }
+
+    private void state7() throws ParseException {
+        if ("<спис_опер>".equals(topSymbol())) {
+            reduce(2, "<прог>");
+            return;
+        }
+        throw error("<спис_опер>");
+    }
+
+    private void state8() throws ParseException {
+        switch (topSymbol()) {
+            case "id":
+                shift(TokenType.COMMA, TokenType.ASSIGNMENT);
+                break;
+            case ",":
+                goToState(9);
+                break;
+            case "=":
+                goToState(10);
+                break;
+            default:
+                throw error("id, COMMA или ASSIGNMENT");
+        }
+    }
+
+    private void state9() throws ParseException {
+        switch (topSymbol()) {
+            case ",":
+                shift(TokenType.IDENTIFIER);
+                break;
+            case "<множ>":
+                goToState(11);
+                break;
+            case "id":
+                goToState(8);
+                break;
+            default:
+                throw error("id или COMMA");
+        }
+    }
+
+    private void state10() throws ParseException {
+        switch (topSymbol()) {
+            case "=":
+                shift(TokenType.IDENTIFIER, TokenType.LITERAL);
+                break;
+            case "<арифм_выр>":
+                goToState(14);
+                break;
+            case "<elem>":
+                goToState(15);
+                break;
+            case "id":
+                goToState(18);
+                break;
+            case "lit":
+                goToState(19);
+                break;
+            default:
+                throw error("id, lit или ASSIGNMENT");
+        }
+    }
+
+    private void state11() throws ParseException {
+        switch (topSymbol()) {
+            case "<множ>":
+                shift(TokenType.COMMA);
+                break;
+            case ",":
+                goToState(12);
+                break;
+            default:
+                throw error("id или COMMA");
+        }
+    }
+
+    private void state12() throws ParseException {
+        switch (topSymbol()) {
+            case ",":
+                shift(TokenType.IDENTIFIER, TokenType.LITERAL);
+                break;
+            case "<арифм_выр>":
+                goToState(13);
+                break;
+            case "<elem>":
+                goToState(15);
+                break;
+            case "id":
+                goToState(18);
+                break;
+            case "lit":
+                goToState(19);
+                break;
+            default:
+                throw error("id, lit или COMMA");
+        }
+    }
+
+    private void state13() throws ParseException {
+        if ("<арифм_выр>".equals(topSymbol())) {
+            reduce(5, "<множ>");
+            return;
+        }
+        throw error("<арифм_выр>");
+    }
+
+    private void state14() throws ParseException {
+        if ("<арифм_выр>".equals(topSymbol())) {
+            reduce(3, "<множ>");
+            return;
+        }
+        throw error("<арифм_выр>");
+    }
+
+    private void state15() throws ParseException {
+        switch (topSymbol()) {
+            case "<опер>":
+                Token next = currentInput();
+                if (next == null) {
+                    reduce(1, "<спис_опер>");
+                    break;
+                }
+
+                if (next.getType() != TokenType.P){
+                    throw error("P или конец файла");
+                }
+
+                if (isIndentGreaterOrEqual()) {
+                    shift(TokenType.P);
+                }
+                else {
+                    popIndentLevel();
+                    reduce(1, "<спис_опер>");
+                }
+
+                break;
+            case "P":
+                goToState(3);
+                break;
+            default:
+                throw error("<опер> или P");
+        }
     }
 }

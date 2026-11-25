@@ -10,6 +10,7 @@ public class DescendingParser {
     private final List<Token> tokens;
     private int index;
 
+    //TODO: возможно подкорректировать вывод ошибок
     public DescendingParser(List<Token> tokens){
         this.tokens = List.copyOf(tokens);
         this.index = 0;
