@@ -1,0 +1,202 @@
+case "<лог_и>":
+                Token next = currentInput();
+                if (next == null) {
+                    throw error("and, ), not, :, id или lit");
+                }
+
+                if (next.getType() == TokenType.LPAR ||
+                        next.getType() == TokenType.RPAR ||
+                        next.getType() == TokenType.OR ||
+                        next.getType() == TokenType.COLON ||
+                        next.getType() == TokenType.IDENTIFIER ||
+                        next.getType() == TokenType.LITERAL) {
+                    reduce(1, "<лог_выр>");
+                    break;
+                }
+
+                if (next.getType() == TokenType.AND) {
+                    shift(TokenType.LPAR, TokenType.RPAR, TokenType.OR, TokenType.COLON, TokenType.AND, TokenType.IDENTIFIER, TokenType.LITERAL);
+                    break;
+                }
+
+                if (next.getType() != TokenType.P) {
+                    throw error("P или конец файла");
+                }
+                break;
+            case "and":
+                goToState(33);
+                break;
+            default:
+                throw error("and, or, (, not, id или lit");
+        }
+
+
+private void state25() throws ParseException {
+        switch (topSymbol()) {
+            case "<part>":
+                Token next = currentInput();
+                if (next == null) {
+                    popIndentLevel();
+                    reduce(0, "<список_elif>");
+                    break;
+                }
+
+                if (next.getType() != TokenType.P) {
+                    throw error("P или конец файла");
+                }
+
+                if (isIndentGreaterOrEqual()) {
+                    shift(TokenType.P);
+                }
+                else {
+                    popIndentLevel();
+                    reduce(0, "<список_elif>");
+                }
+
+                break;
+            case "P":
+                shift(TokenType.ELIF, TokenType.ELSE);
+                break;
+            case "<список_elif>":
+                goToState(26);
+                break;
+            case "elif":
+                goToState(51);
+                break;
+            case "else":
+                goToState(54);
+                break;
+            default:
+                throw error("<part>, P, elif или else");
+        }
+    }
+
+
+
+if a > b and c > d or e > f:
+    x = y + z
+_____________Lexer____________
+IF : if [1:1]
+IDENTIFIER : a [1:4]
+GREATER : > [1:6]
+IDENTIFIER : b [1:8]
+AND : and [1:10]
+IDENTIFIER : c [1:14]
+GREATER : > [1:16]
+IDENTIFIER : d [1:18]
+OR : or [1:20]
+IDENTIFIER : e [1:23]
+GREATER : > [1:25]
+IDENTIFIER : f [1:27]
+COLON : : [1:28]
+NEWLINE : \n [1:29]
+INDENT : INDENT [2:5]
+IDENTIFIER : x [2:5]
+ASSIGNMENT : = [2:7]
+IDENTIFIER : y [2:9]
+PLUS : + [2:11]
+IDENTIFIER : z [2:13]
+NEWLINE : \n [2:14]
+DEDENT : DEDENT [3:1]
+Cинтаксических ошибок не найдено (нисходящий анализатор).
+
+STATE: 0 | STACK: [] | STATE STACK: [0] | INPUT: P : 0 [1:1]
+STATE: 0 | STACK: [P] | STATE STACK: [0] | INPUT: IF : if [1:1]
+STATE: 1 | STACK: [P] | STATE STACK: [1, 0] | INPUT: IF : if [1:1]
+STATE: 1 | STACK: [if, P] | STATE STACK: [1, 0] | INPUT: IDENTIFIER : a [1:4]
+STATE: 24 | STACK: [if, P] | STATE STACK: [24, 1, 0] | INPUT: IDENTIFIER : a [1:4]
+STATE: 24 | STACK: [id, if, P] | STATE STACK: [24, 1, 0] | INPUT: GREATER : > [1:6]
+STATE: 18 | STACK: [id, if, P] | STATE STACK: [18, 24, 1, 0] | INPUT: GREATER : > [1:6]
+STATE: 24 | STACK: [<elem>, if, P] | STATE STACK: [24, 1, 0] | INPUT: GREATER : > [1:6]
+STATE: 15 | STACK: [<elem>, if, P] | STATE STACK: [15, 24, 1, 0] | INPUT: GREATER : > [1:6]
+STATE: 24 | STACK: [<арифм_выр>, if, P] | STATE STACK: [24, 1, 0] | INPUT: GREATER : > [1:6]
+STATE: 42 | STACK: [<арифм_выр>, if, P] | STATE STACK: [42, 24, 1, 0] | INPUT: GREATER : > [1:6]
+STATE: 42 | STACK: [>, <арифм_выр>, if, P] | STATE STACK: [42, 24, 1, 0] | INPUT: IDENTIFIER : b [1:8]
+STATE: 44 | STACK: [>, <арифм_выр>, if, P] | STATE STACK: [44, 42, 24, 1, 0] | INPUT: IDENTIFIER : b [1:8]
+STATE: 42 | STACK: [<оператор_сравнения>, <арифм_выр>, if, P] | STATE STACK: [42, 24, 1, 0] | INPUT: IDENTIFIER : b [1:8]
+STATE: 49 | STACK: [<оператор_сравнения>, <арифм_выр>, if, P] | STATE STACK: [49, 42, 24, 1, 0] | INPUT: IDENTIFIER : b [1:8]
+STATE: 49 | STACK: [id, <оператор_сравнения>, <арифм_выр>, if, P] | STATE STACK: [49, 42, 24, 1, 0] | INPUT: AND : and [1:10]
+STATE: 18 | STACK: [id, <оператор_сравнения>, <арифм_выр>, if, P] | STATE STACK: [18, 49, 42, 24, 1, 0] | INPUT: AND : and [1:10]
+STATE: 49 | STACK: [<elem>, <оператор_сравнения>, <арифм_выр>, if, P] | STATE STACK: [49, 42, 24, 1, 0] | INPUT: AND : and [1:10]
+STATE: 15 | STACK: [<elem>, <оператор_сравнения>, <арифм_выр>, if, P] | STATE STACK: [15, 49, 42, 24, 1, 0] | INPUT: AND : and [1:10]
+STATE: 49 | STACK: [<арифм_выр>, <оператор_сравнения>, <арифм_выр>, if, P] | STATE STACK: [49, 42, 24, 1, 0] | INPUT: AND : and [1:10]
+STATE: 50 | STACK: [<арифм_выр>, <оператор_сравнения>, <арифм_выр>, if, P] | STATE STACK: [50, 49, 42, 24, 1, 0] | INPUT: AND : and [1:10]
+STATE: 24 | STACK: [<сравнение>, if, P] | STATE STACK: [24, 1, 0] | INPUT: AND : and [1:10]
+STATE: 36 | STACK: [<сравнение>, if, P] | STATE STACK: [36, 24, 1, 0] | INPUT: AND : and [1:10]
+STATE: 24 | STACK: [<лог_и>, if, P] | STATE STACK: [24, 1, 0] | INPUT: AND : and [1:10]
+STATE: 32 | STACK: [<лог_и>, if, P] | STATE STACK: [32, 24, 1, 0] | INPUT: AND : and [1:10]
+STATE: 32 | STACK: [and, <лог_и>, if, P] | STATE STACK: [32, 24, 1, 0] | INPUT: IDENTIFIER : c [1:14]
+STATE: 33 | STACK: [and, <лог_и>, if, P] | STATE STACK: [33, 32, 24, 1, 0] | INPUT: IDENTIFIER : c [1:14]
+STATE: 33 | STACK: [id, and, <лог_и>, if, P] | STATE STACK: [33, 32, 24, 1, 0] | INPUT: GREATER : > [1:16]
+STATE: 18 | STACK: [id, and, <лог_и>, if, P] | STATE STACK: [18, 33, 32, 24, 1, 0] | INPUT: GREATER : > [1:16]
+STATE: 33 | STACK: [<elem>, and, <лог_и>, if, P] | STATE STACK: [33, 32, 24, 1, 0] | INPUT: GREATER : > [1:16]
+STATE: 15 | STACK: [<elem>, and, <лог_и>, if, P] | STATE STACK: [15, 33, 32, 24, 1, 0] | INPUT: GREATER : > [1:16]
+STATE: 33 | STACK: [<арифм_выр>, and, <лог_и>, if, P] | STATE STACK: [33, 32, 24, 1, 0] | INPUT: GREATER : > [1:16]
+STATE: 42 | STACK: [<арифм_выр>, and, <лог_и>, if, P] | STATE STACK: [42, 33, 32, 24, 1, 0] | INPUT: GREATER : > [1:16]
+STATE: 42 | STACK: [>, <арифм_выр>, and, <лог_и>, if, P] | STATE STACK: [42, 33, 32, 24, 1, 0] | INPUT: IDENTIFIER : d [1:18]
+STATE: 44 | STACK: [>, <арифм_выр>, and, <лог_и>, if, P] | STATE STACK: [44, 42, 33, 32, 24, 1, 0] | INPUT: IDENTIFIER : d [1:18]
+STATE: 42 | STACK: [<оператор_сравнения>, <арифм_выр>, and, <лог_и>, if, P] | STATE STACK: [42, 33, 32, 24, 1, 0] | INPUT: IDENTIFIER : d [1:18]
+STATE: 49 | STACK: [<оператор_сравнения>, <арифм_выр>, and, <лог_и>, if, P] | STATE STACK: [49, 42, 33, 32, 24, 1, 0] | INPUT: IDENTIFIER : d [1:18]
+STATE: 49 | STACK: [id, <оператор_сравнения>, <арифм_выр>, and, <лог_и>, if, P] | STATE STACK: [49, 42, 33, 32, 24, 1, 0] | INPUT: OR : or [1:20]
+STATE: 18 | STACK: [id, <оператор_сравнения>, <арифм_выр>, and, <лог_и>, if, P] | STATE STACK: [18, 49, 42, 33, 32, 24, 1, 0] | INPUT: OR : or [1:20]
+STATE: 49 | STACK: [<elem>, <оператор_сравнения>, <арифм_выр>, and, <лог_и>, if, P] | STATE STACK: [49, 42, 33, 32, 24, 1, 0] | INPUT: OR : or [1:20]
+STATE: 15 | STACK: [<elem>, <оператор_сравнения>, <арифм_выр>, and, <лог_и>, if, P] | STATE STACK: [15, 49, 42, 33, 32, 24, 1, 0] | INPUT: OR : or [1:20]
+STATE: 49 | STACK: [<арифм_выр>, <оператор_сравнения>, <арифм_выр>, and, <лог_и>, if, P] | STATE STACK: [49, 42, 33, 32, 24, 1, 0] | INPUT: OR : or [1:20]
+STATE: 50 | STACK: [<арифм_выр>, <оператор_сравнения>, <арифм_выр>, and, <лог_и>, if, P] | STATE STACK: [50, 49, 42, 33, 32, 24, 1, 0] | INPUT: OR : or [1:20]
+STATE: 33 | STACK: [<сравнение>, and, <лог_и>, if, P] | STATE STACK: [33, 32, 24, 1, 0] | INPUT: OR : or [1:20]
+STATE: 36 | STACK: [<сравнение>, and, <лог_и>, if, P] | STATE STACK: [36, 33, 32, 24, 1, 0] | INPUT: OR : or [1:20]
+STATE: 33 | STACK: [<лог_и>, and, <лог_и>, if, P] | STATE STACK: [33, 32, 24, 1, 0] | INPUT: OR : or [1:20]
+Синтаксическая ошибка (строка 1, столбец 20): Состояние 33: ожидалось or, (, not, id или lit, найдено or ('or').
+
+
+
+if not not a > b:
+    x = y + z
+_____________Lexer____________
+IF : if [1:1]
+NOT : not [1:4]
+NOT : not [1:8]
+IDENTIFIER : a [1:12]
+GREATER : > [1:14]
+IDENTIFIER : b [1:16]
+COLON : : [1:17]
+NEWLINE : \n [1:18]
+INDENT : INDENT [2:5]
+IDENTIFIER : x [2:5]
+ASSIGNMENT : = [2:7]
+IDENTIFIER : y [2:9]
+PLUS : + [2:11]
+IDENTIFIER : z [2:13]
+NEWLINE : \n [2:14]
+DEDENT : DEDENT [3:1]
+Cинтаксических ошибок не найдено (нисходящий анализатор).
+
+STATE: 0 | STACK: [] | STATE STACK: [0] | INPUT: P : 0 [1:1]
+STATE: 0 | STACK: [P] | STATE STACK: [0] | INPUT: IF : if [1:1]
+STATE: 1 | STACK: [P] | STATE STACK: [1, 0] | INPUT: IF : if [1:1]
+STATE: 1 | STACK: [if, P] | STATE STACK: [1, 0] | INPUT: NOT : not [1:4]
+STATE: 24 | STACK: [if, P] | STATE STACK: [24, 1, 0] | INPUT: NOT : not [1:4]
+STATE: 24 | STACK: [not, if, P] | STATE STACK: [24, 1, 0] | INPUT: NOT : not [1:8]
+STATE: 40 | STACK: [not, if, P] | STATE STACK: [40, 24, 1, 0] | INPUT: NOT : not [1:8]
+STATE: 40 | STACK: [not, not, if, P] | STATE STACK: [40, 40, 24, 1, 0] | INPUT: IDENTIFIER : a [1:12]
+STATE: 40 | STACK: [id, not, not, if, P] | STATE STACK: [40, 40, 24, 1, 0] | INPUT: GREATER : > [1:14]
+STATE: 18 | STACK: [id, not, not, if, P] | STATE STACK: [18, 40, 40, 24, 1, 0] | INPUT: GREATER : > [1:14]
+STATE: 40 | STACK: [<elem>, not, not, if, P] | STATE STACK: [40, 40, 24, 1, 0] | INPUT: GREATER : > [1:14]
+STATE: 15 | STACK: [<elem>, not, not, if, P] | STATE STACK: [15, 40, 40, 24, 1, 0] | INPUT: GREATER : > [1:14]
+STATE: 40 | STACK: [<арифм_выр>, not, not, if, P] | STATE STACK: [40, 40, 24, 1, 0] | INPUT: GREATER : > [1:14]
+STATE: 42 | STACK: [<арифм_выр>, not, not, if, P] | STATE STACK: [42, 40, 40, 24, 1, 0] | INPUT: GREATER : > [1:14]
+STATE: 42 | STACK: [>, <арифм_выр>, not, not, if, P] | STATE STACK: [42, 40, 40, 24, 1, 0] | INPUT: IDENTIFIER : b [1:16]
+STATE: 44 | STACK: [>, <арифм_выр>, not, not, if, P] | STATE STACK: [44, 42, 40, 40, 24, 1, 0] | INPUT: IDENTIFIER : b [1:16]
+STATE: 42 | STACK: [<оператор_сравнения>, <арифм_выр>, not, not, if, P] | STATE STACK: [42, 40, 40, 24, 1, 0] | INPUT: IDENTIFIER : b [1:16]
+STATE: 49 | STACK: [<оператор_сравнения>, <арифм_выр>, not, not, if, P] | STATE STACK: [49, 42, 40, 40, 24, 1, 0] | INPUT: IDENTIFIER : b [1:16]
+STATE: 49 | STACK: [id, <оператор_сравнения>, <арифм_выр>, not, not, if, P] | STATE STACK: [49, 42, 40, 40, 24, 1, 0] | INPUT: COLON : : [1:17]
+STATE: 18 | STACK: [id, <оператор_сравнения>, <арифм_выр>, not, not, if, P] | STATE STACK: [18, 49, 42, 40, 40, 24, 1, 0] | INPUT: COLON : : [1:17]
+STATE: 49 | STACK: [<elem>, <оператор_сравнения>, <арифм_выр>, not, not, if, P] | STATE STACK: [49, 42, 40, 40, 24, 1, 0] | INPUT: COLON : : [1:17]
+STATE: 15 | STACK: [<elem>, <оператор_сравнения>, <арифм_выр>, not, not, if, P] | STATE STACK: [15, 49, 42, 40, 40, 24, 1, 0] | INPUT: COLON : : [1:17]
+STATE: 49 | STACK: [<арифм_выр>, <оператор_сравнения>, <арифм_выр>, not, not, if, P] | STATE STACK: [49, 42, 40, 40, 24, 1, 0] | INPUT: COLON : : [1:17]
+STATE: 50 | STACK: [<арифм_выр>, <оператор_сравнения>, <арифм_выр>, not, not, if, P] | STATE STACK: [50, 49, 42, 40, 40, 24, 1, 0] | INPUT: COLON : : [1:17]
+STATE: 40 | STACK: [<сравнение>, not, not, if, P] | STATE STACK: [40, 40, 24, 1, 0] | INPUT: COLON : : [1:17]
+STATE: 36 | STACK: [<сравнение>, not, not, if, P] | STATE STACK: [36, 40, 40, 24, 1, 0] | INPUT: COLON : : [1:17]
+STATE: 40 | STACK: [<лог_и>, not, not, if, P] | STATE STACK: [40, 40, 24, 1, 0] | INPUT: COLON : : [1:17]
+Синтаксическая ошибка (строка 1, столбец 17): Состояние 40: ожидалось not, (, id или lit, найдено : (':').
+

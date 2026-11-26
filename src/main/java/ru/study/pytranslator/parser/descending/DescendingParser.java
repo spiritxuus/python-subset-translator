@@ -111,7 +111,7 @@ public class DescendingParser {
         Token token = current();
 
         if (token == null){
-            throw error("IDENTIFIER или IF");
+            throw error("id или if");
         }
 
         switch(token.getType()){
@@ -122,7 +122,7 @@ public class DescendingParser {
                 ifStatement();
                 return true;
             default:
-                throw error("IDENTIFIER или IF");
+                throw error("id или if");
         }
     }
 
@@ -175,7 +175,7 @@ public class DescendingParser {
 
             return;
         }
-        throw error("ELIF, ELSE или конец условной конструкции");
+        throw error("elif, else или конец условной конструкции");
     }
 
     //<множ> ::== id = <Y> (id)
@@ -196,7 +196,7 @@ public class DescendingParser {
         Token token = current();
 
         if (token == null) {
-            throw error("ASSIGNMENT или COMMA");
+            throw error("= или ,");
         }
 
         if (token.getType() == TokenType.ASSIGNMENT) {
@@ -210,7 +210,7 @@ public class DescendingParser {
             arithmeticExpression();
         }
         else {
-            throw error("ASSIGNMENT или COMMA");
+            throw error("= или ,");
         }
     }
 
@@ -293,7 +293,7 @@ public class DescendingParser {
         Token token = current();
 
         if (token == null) {
-            throw error("PLUS, MINUS, DIVISION или MULTIPLICATION");
+            throw error("+ - / или *");
         }
 
         switch(token.getType()){
@@ -310,7 +310,7 @@ public class DescendingParser {
                 expect(TokenType.MULTIPLICATION);
                 break;
             default:
-                throw error("PLUS, MINUS, DIVISION или MULTIPLICATION");
+                throw error("+ - / или *");
         }
     }
 
@@ -322,7 +322,7 @@ public class DescendingParser {
         Token token = current();
 
         if (token == null){
-            throw error("IDENTIFIER или LITERAL");
+            throw error("id или lit");
         }
 
         switch(token.getType()){
@@ -333,7 +333,7 @@ public class DescendingParser {
                 expect(TokenType.LITERAL);
                 break;
             default:
-                throw error("IDENTIFIER или LITERAL");
+                throw error("id или lit");
         }
     }
 
@@ -367,7 +367,7 @@ public class DescendingParser {
             return;
         }
 
-        throw error("OR, COLON или RPAR");
+        throw error("or, : или )");
     }
 
     //<лог_и> ::== <лог_опер> <V> (id lit ( not)
@@ -402,7 +402,7 @@ public class DescendingParser {
             return;
         }
 
-        throw error("AND, OR, COLON или RPAR");
+        throw error("and, or, : или )");
     }
 
     /*
@@ -414,7 +414,7 @@ public class DescendingParser {
         Token token = current();
 
         if (token == null) {
-            throw error("NOT, LPAR, IDENTIFIER или LITERAL");
+            throw error("not, (, id или lit");
         }
 
         switch (token.getType()) {
@@ -432,7 +432,7 @@ public class DescendingParser {
                 comparison();
                 break;
             default:
-                throw error("NOT, LPAR, IDENTIFIER или LITERAL");
+                throw error("not, (, id или lit");
         }
     }
 
