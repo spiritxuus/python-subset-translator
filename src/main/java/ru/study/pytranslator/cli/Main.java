@@ -13,7 +13,7 @@ import java.util.List;
 
 public class Main {
     public static void main(String[] args) {
-        Path path = Path.of("D:\\projects\\Java\\ТАИФЯ\\python-subset-translator-coursework\\src\\main\\resources\\examples\\basic_example");
+        Path path = Path.of("D:\\projects\\Java\\ТАИФЯ\\python-subset-translator-coursework\\src\\main\\resources\\examples\\incorrect_example");
 
         try{
             Lexer lexer = new Lexer();

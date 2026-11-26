@@ -1,2 +1,2 @@
-if a > b and:
+if a > b and (a == c):
     c = d + e

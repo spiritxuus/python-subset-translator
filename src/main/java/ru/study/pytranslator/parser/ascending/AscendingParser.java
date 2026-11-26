@@ -118,7 +118,7 @@ public class AscendingParser {
     private void shift(TokenType... expected) throws ParseException {
         Token token = currentInput();
         if (token == null) {
-            throw error("ожидалось: " + Arrays.toString(expected));
+            throw error(Arrays.toString(expected));
         }
 
         boolean matches = false;
@@ -130,7 +130,7 @@ public class AscendingParser {
         }
 
         if (!matches) {
-            throw error("ожидалось: " + Arrays.toString(expected));
+            throw error(Arrays.toString(expected));
         }
 
         if (token.getType() == TokenType.P) {
@@ -875,15 +875,22 @@ public class AscendingParser {
         switch (topSymbol()) {
             case "<лог_и>":
                 Token next = currentInput();
+                if (next == null) {
+                    throw error("and, or, (, not, id или lit");
+                }
+
                 if (next.getType() == TokenType.LPAR ||
+                        next.getType() == TokenType.RPAR ||
                         next.getType() == TokenType.OR ||
-                        next.getType() == TokenType.COLON) {
+                        next.getType() == TokenType.COLON ||
+                        next.getType() == TokenType.IDENTIFIER ||
+                        next.getType() == TokenType.LITERAL) {
                     reduce(1, "<лог_выр>");
                     break;
                 }
 
                 if (next.getType() == TokenType.AND) {
-                    shift(TokenType.LPAR, TokenType.OR, TokenType.COLON);
+                    shift(TokenType.LPAR, TokenType.RPAR, TokenType.OR, TokenType.COLON, TokenType.AND, TokenType.IDENTIFIER, TokenType.LITERAL);
                     break;
                 }
 
@@ -891,8 +898,11 @@ public class AscendingParser {
                     throw error("P или конец файла");
                 }
                 break;
+            case "and":
+                goToState(33);
+                break;
             default:
-                throw error("or, (, not, id или lit");
+                throw error("and, or, (, not, id или lit");
         }
     }
 
@@ -1354,7 +1364,27 @@ public class AscendingParser {
     private void state58() throws ParseException {
         switch (topSymbol()) {
             case "<лог_и>":
-                shift(TokenType.AND);
+                Token next = currentInput();
+                if (next == null) {
+                    throw error("and, or, (, not, id или lit");
+                }
+
+                if (next.getType() == TokenType.AND) {
+                    shift(TokenType.AND);
+                    //shift(TokenType.LPAR, TokenType.RPAR, TokenType.OR, TokenType.COLON, TokenType.AND, TokenType.IDENTIFIER, TokenType.LITERAL);
+                }
+                else if (next.getType() == TokenType.LPAR ||
+                        next.getType() == TokenType.RPAR ||
+                        next.getType() == TokenType.OR ||
+                        next.getType() == TokenType.COLON ||
+                        next.getType() == TokenType.IDENTIFIER ||
+                        next.getType() == TokenType.LITERAL) {
+                    reduce(3, "<лог_выр>");
+                }
+                else {
+                    throw error("and, or, (, not, id или lit");
+                }
+
                 break;
             case "and":
                 goToState(33);
