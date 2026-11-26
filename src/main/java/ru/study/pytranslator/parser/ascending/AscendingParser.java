@@ -1022,12 +1022,7 @@ public class AscendingParser {
                     goToState(37);
                 }
                 else {
-
-                    shift(
-                            TokenType.NOT,
-                            TokenType.IDENTIFIER,
-                            TokenType.LITERAL
-                    );
+                    shift(TokenType.NOT, TokenType.IDENTIFIER, TokenType.LITERAL);
                 }
 
                 break;
